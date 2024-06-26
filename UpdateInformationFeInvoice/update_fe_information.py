@@ -20,7 +20,7 @@ def read_csv(file_: str):
     return data
 
 
-def updateInvoiceInfoFe(id_, cufe):
+def updateInvoiceInfoFe(invoice_id, cufe):
 
     with psycopg.connect(
             f"dbname={database} user=postgres host=db password=SUp3r-pass*DB"
@@ -33,7 +33,7 @@ def updateInvoiceInfoFe(id_, cufe):
                 fe_cufe=%s,
                 fe_qrcode=%s,
                 fe_delivery_error_message='' WHERE id=%s;
-                """, (cufe, fe_url+cufe, id_))
+                """, (cufe, fe_url+cufe, invoice_id))
         conn.commit()
 
 
@@ -42,15 +42,15 @@ if __name__ == '__main__':
     Invoice = Model.get('account.invoice')
     failed_invoices = Invoice.find([
         ('state', 'in', ['posted', 'paid']),
-        ('fe_delivery_state', '=', 'failure'),
-        ('type', '=', 'out')
+        ('fe_delivery_state', '=', 'failure')
     ])
 
     data = read_csv('./facturas_fallidas.csv')
     for invoice in failed_invoices:
-        number, id_ = invoice.number, invoice.id
+        number, invoice_id = invoice.number, invoice.id
         register = list(filter(lambda item: item['Numero'] == number, data))
         if register:
             CUFE = register[0]['CUFE/CUDE']
-            raise Exception(number)
-            updateInvoiceInfoFe(id_, CUFE)
+            updateInvoiceInfoFe(invoice_id, CUFE)
+
+    raise Exception(CUFE)
